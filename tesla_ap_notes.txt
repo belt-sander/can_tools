@@ -49,8 +49,69 @@ playing back data by priority:
 0x404 == dunno, looks like ticks or seconds? nothing control related
 0x406 == dunno, looks like more ticks? nothing control related
 0x408 == dunno, looks like nothing
-0x409 == dunno
+0x409 == du
 0x40A == dunno
 0x418 == dunno, counter at the beginning?
 0x501 == dunno, nothing really, states
 0x70C == dunno, nothing really, states
+
+v1 pt bus / bus 3:
+
+0x154 == PRNDL
+	byte 0 
+		park = 0x12
+		drive = 0x18
+		neutral = 0x16
+		reverse = 0x14
+
+0x185 == iBooster channel (maybe same as chassis?)
+	looks like first few bytes are position and next few are pressure??
+
+0x238 == AP stalk
+	byte 0
+		normal = 0x40
+		toward driver = 0x42
+		away from driver = 0x41
+		down = 0x60
+		up = 0x50
+	byte 1 
+		closest distance = 0x00
+		level 2 = 0x21
+		level 3 = 0x42
+		level 4 = 0x64
+		level 5 = 0x85
+		level 6 = 0xA6
+		level 7 = 0xC8
+
+
+difference / measurements with / without das pt and chassis connected to rest of car:
+
+ch_bus
+New message_id: 0:219
+New message_id: 0:239
+New message_id: 0:2b9
+New message_id: 0:309
+New message_id: 0:32b
+New message_id: 0:350
+New message_id: 0:36c
+New message_id: 0:389
+New message_id: 0:399
+New message_id: 0:3c9
+New message_id: 0:3ca
+New message_id: 0:3e9
+New message_id: 0:409
+New message_id: 0:459
+New message_id: 0:488 (lateral steering command) / (4 bytes, LE order)
+New message_id: 0:531
+New message_id: 0:539
+New message_id: 0:5c9
+
+pt_bus
+New message_id: 1:2bf (some kind of controller request) / (8 bytes, LE order)
+New message_id: 1:391 (look like cluster states or something of the sort) / (8 bytes, LE order)
+New message_id: 1:3bf (more states of some type, probably for the cluster if I had to imagine) / (8 bytes, LE order)
+
+no_diff_w_private can disconnected on ch_bus or pt_bus / NO ERRORS ON DISPLAY, EITHER??
+
+
+

@@ -135,7 +135,7 @@ def main():
 			if maskint == 0x800:
 				dataStructOut = struct.pack('>Q',dataInt) # '>Q' argument == big endian long struct format
 				p.can_send(messIdenInt,dataStructOut,args.playbackBus)
-				# print([(busNumInt), (messIden), (data), (lengthInt)])
+				print([(busNumInt), (messIden), (data), (lengthInt)])
 				time.sleep(args.sleep) # sleep
 
 			elif messIdenInt == maskint:
@@ -208,8 +208,8 @@ def main():
 				vehSpd[i:] = (int(('0x'+data[:16][12:]),0)&0xffff)*0.00999999978
 			if messIden == '0x488':
 				apState[i:] = (int(('0x'+data[:8][6:]),0)&0xC0)
-			if messIden == '0x108':
-				accelPedal[i:] = (((int(('0x'+data[:16][14:]),0))*2)/5)
+			# if messIden == '0x108':
+			# 	accelPedal[i:] = (((int('0x'+data[:16][14:]),0)*2)/5)
 			if messIden == '0x3':
 				steerAng[i:] = (((int('0x'+data[:6][2:],0)&0x3FFF)/2)-2048)
 			if messIden == '0x185':
@@ -221,7 +221,7 @@ def main():
 				dataGraph[i:] = dataInt
 				idGraph[i:] = messIdenInt
 				if lengthInt == 8:	
-					message1[i:] = ba('0x'+data[:6][2:]).uint 
+					message1[i:] = ba('0x'+data[:6][2:]).userint 
 					message2[i:] = ba('0x'+data[:10][6:]).uint 
 					message3[i:] = ba('0x'+data[:14][10:]).uint 
 					message4[i:] = ba('0x'+data[:18][14:]).uint
@@ -231,16 +231,21 @@ def main():
 					message3byte[i:] = ba('0x'+data[:10][8:]).uint
 					message4byte[i:] = ba('0x'+data[:12][10:]).uint
 					message5byte[i:] = ba('0x'+data[:14][12:]).uint										
-					message6byte[i:] = ba('0x'+data[:16][14:]).uint										
+					message6byte[i:] = ba('0x'+data[:16][14:]).uint 										
 					message7byte[i:] = ba('0x'+data[:18][16:]).uint	
 
 					### user messages for experimentation ###	
-					# userMess1[i:] = (int(('0x'+data[:8][2:]),0)&0xffff)>>0
-					# userMess2[i:] = (int(('0x'+data[:14][8:]),0)&0xffffff)>>0
-					# userMess3[i:] = (int(('0x'+data[:8][2:]),0)&0x000000)>>0
-					# userMess4[i:] = (int(('0x'+data[:8][2:]),0)&0x000000)>>0
-					# userMess5[i:] = (int(('0x'+data[:8][2:]),0)&0x000000)>>0
+					userMess2[i:] = (int(('0x'+data[:6][2:]),0)&0xf800)>>11 
+					userMess3[i:] = (int(('0x'+data[:6][2:]),0)&0xfc00)>>10
+					userMess4[i:] = (int(('0x'+data[:6][2:]),0)&0xfe00)>>9
+					userMess5[i:] = (int(('0x'+data[:6][2:]),0)&0xff00)>>8
 
+					# userMess1[i:] = (int(('0x'+data[:8][2:]),0)&0xffff)>>0
+					# userMess2[i:] = (int(('0x'+data[:7][2:]),0)&0xfffff)>>0 ### 20 bit 
+					# userMess3[i:] = (int(('0x'+data[:8][2:]),0)&0xffffff)>>0 ### 24 bit
+					# userMess4[i:] = ba('0x'+data[:8][2:]).int # signed 24 bit
+					# userMess5[i:] = ba('0x'+data[:10][2:]).int # signed 32 bit					
+					
 				elif lengthInt == 7:
 					message1[i:] = ba('0x'+data[:6][2:]).uint
 					message2[i:] = ba('0x'+data[:10][6:]).uint
@@ -302,6 +307,8 @@ def main():
 	if args.grapher == 'True':		
 		print('')
 		print('data length of masked ID: ', lengthInt)
+		print('')
+		print('bus of masked ID: ', busNumInt)
 		print('')		
 		print('data after for loop: ', dataGraph, '\n')	
 		print('data array size: ', np.size(dataGraph), '\n')		
@@ -321,6 +328,7 @@ def main():
 		bk1.plot(bkR, color='gold', label='brake press R')
 		bk1.legend()
 		ax2.plot(message1, label='2 byte / message1')
+		ax2.plot(accelPedal) ### zero line 
 		ax2.legend()
 		ax3.plot(message2, label='2 byte / message2')
 		ax3.legend()
