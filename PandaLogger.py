@@ -30,7 +30,8 @@ def parse_args():
 def can_logger():
 	args = parse_args()
 	# translate user input from mask arg to dec
-	# argId = int(args.mask, 0)
+	if args.mask is not None:
+		argId = int(args.mask, 0)
 
 	try:
 		print("Trying to connect to Panda over USB...")
@@ -48,6 +49,8 @@ def can_logger():
 		p.set_safety_mode(p.SAFETY_ALLOUTPUT)
 	elif args.testMode == "False":
 		p.set_safety_mode(p.SAFETY_NOOUTPUT)
+	elif args.testMode == "Bench":
+		print('no safety mode set y0!')
 	else:
 		print("incorrect testMode arguement")
 		sys.exit("exiting...")
@@ -97,8 +100,11 @@ def can_logger():
 							bus2_msg_cnt += 1
 
 	except KeyboardInterrupt:
+		if args.testMode == "Bench":
+			print('no safety mode set y0!')
+		else:
 		# turn off output mode
-		p.set_safety_mode(p.SAFETY_NOOUTPUT)
+			p.set_safety_mode(p.SAFETY_NOOUTPUT)
 
 		print("\nNow exiting. Final message Counts... Bus 0: " + str(bus0_msg_cnt) + " Bus 1: " + str(bus1_msg_cnt) + " Bus 2: " + str(bus2_msg_cnt))
 		outputfile.close()

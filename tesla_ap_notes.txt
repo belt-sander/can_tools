@@ -87,29 +87,42 @@ v1 pt bus / bus 3:
 difference / measurements with / without das pt and chassis connected to rest of car:
 
 ch_bus
-New message_id: 0:219
-New message_id: 0:239
-New message_id: 0:2b9
-New message_id: 0:309
-New message_id: 0:32b
-New message_id: 0:350
-New message_id: 0:36c
-New message_id: 0:389
-New message_id: 0:399
-New message_id: 0:3c9
-New message_id: 0:3ca
-New message_id: 0:3e9
-New message_id: 0:409
-New message_id: 0:459
-New message_id: 0:488 (lateral steering command) / (4 bytes, LE order)
-New message_id: 0:531
-New message_id: 0:539
-New message_id: 0:5c9
+// passthrough, unaltered //
 
-pt_bus
-New message_id: 1:2bf (some kind of controller request) / (8 bytes, LE order)
-New message_id: 1:391 (look like cluster states or something of the sort) / (8 bytes, LE order)
-New message_id: 1:3bf (more states of some type, probably for the cluster if I had to imagine) / (8 bytes, LE order)
+New message_id: 0:219 (incrementing counter on byte0 and byte2, seems static throughout AP on / AP off)
+New message_id: 0:350 (all zeros, no counter, no crc)
+New message_id: 0:36c (all zeros, no counter, no crc)
+New message_id: 0:459 (all zeros, no counter, no crc)
+New message_id: 0:5c9 (all zeros, no counter, no crc)
+New message_id: 0:309 (heartbeat or something? some states in there that change when AP is active)
+New message_id: 0:32b (overall unintersting states, low dynamics, no crc)
+New message_id: 0:3c9 (rigid uniform counter, unwaviering)
+New message_id: 0:3ca (exists on both busses (careful), no crc, probably relatively insignifigant as a result)
+New message_id: 0:409 (looks like an exit state on byte0 when the vehicle is stopped, unsure, non crc, probably relatively insignfigant as a result)
+New message_id: 0:531 (weird looking security type counter)
+New message_id: 0:539 (more weird looking secuity type counters)
+
+//weird af below //
+
+New message_id: 0: 2b9 (some kind of weird bit length messages, unsure of function at this point, mabye long control. channels are active and making data even when AP is off)
+New message_id: 1: 2bf (some kind of weird bit length messages, unsure of function at this point, mabye long control. channels are active and making data even when AP is off) / (8 bytes, LE order) // SAME AS 0x2b9 ON BUS 0......
+
+// unsure what to do yet //
+
+New message_id: 0:239 (maybe these are states or information that is directed to the cluster to show lane / car position, directly related to AP based on state in byte6, byte4 looks proportional to steering angle on straight section (880_1.csv))
+
+// items to bit bang and figure out what they are with the m1 (remember to generate CRC) //
+
+New message_id: 0: 389 (ap activation states, maybe chimes, instrument cluster states?)
+New message_id: 1: 3bf (ap activation states, maybe chimes, instrument cluster states?) / (8 bytes, LE order) // SAME AS OX389 ON BUS 0.....
+
+New message_id: 0: 399 (ap activation states, instrument cluster states?)
+New message_id: 1: 391 (ap activation states, instrument cluster states?) / (8 bytes, LE order) // SAME AS 0X399 ON BUS 0.....
+
+New message_id: 0: 3e9 (looks like random states on byte1 while AP is active, byte0 looks like a constant configuration, all else looks zero, crc at end)
+
+// generate from m1 for control //
+New message_id: 0:488 (lateral steering command) / (4 bytes, LE order)
 
 no_diff_w_private can disconnected on ch_bus or pt_bus / NO ERRORS ON DISPLAY, EITHER??
 
