@@ -13,23 +13,14 @@ from panda import Panda
 def parse_args():
 	arg_parser = argparse.ArgumentParser(description='log can data using comma.ai panda and export to txt')
 
-	arg_parser.add_argument('-o',
-                          '--outputFileArg', 
-                          required=True, 
-                          help='txt file output path')
-	arg_parser.add_argument('-t',
-													'--testMode',
-													required=True,
-													help='set to <True> if ack is required')
-	arg_parser.add_argument('-m',
-													'--mask',
-													required=False,
-													help='set to only log / display data from a particular identifier e.g. <0x666>')
+	arg_parser.add_argument('-o', '--outputFileArg', required=True, help='txt file output path')
+	arg_parser.add_argument('-t', '--testMode', required=True, help='set to <True> if ack is required')
+	arg_parser.add_argument('-m', '--mask', required=False, help='set to only log / display data from a particular identifier e.g. <0x666>')
 	return arg_parser.parse_args()
 
 def can_logger():
 	args = parse_args()
-	# translate user input from mask arg to dec
+
 	if args.mask is not None:
 		argId = int(args.mask, 0)
 
