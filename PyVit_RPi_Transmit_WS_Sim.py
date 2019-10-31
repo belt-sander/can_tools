@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-### can transmit module ###
+### can transmit wheel speed emulation module ###
 
 from pyvit import can
 from pyvit.hw import socketcan
@@ -12,7 +12,7 @@ def parse_args():
 	# determine how many messages to send
 	arg_parser = argparse.ArgumentParser(description='tool to send can messages')
 	arg_parser.add_argument('-n', '--num', type=int, required=True, help='number of messages to send') 
-	arg_parser.add_argument('-f', '--freq', type=float, required=False, default=0.1, help='sleep time between mess tx')
+	arg_parser.add_argument('-f', '--freq', type=float, required=False, default=0.01, help='sleep time between mess tx (default 0.01 seconds / 100hz)')
 	return arg_parser.parse_args()
 
 def main():
@@ -20,9 +20,9 @@ def main():
 	args = parse_args()
 
 	# bring up can interface device
-	os.system("sudo /sbin/ip link set can0 up type can bitrate 1000000")
+	os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")
 	print("if no errors above, can device up at can0")
-	print("can baud rate set to 1mbps")
+	print("can baud rate set to 500kbps")
 
 	# associate device with "can0"
 	dev = socketcan.SocketCanDev("can0")
@@ -33,16 +33,21 @@ def main():
 
 	while i < (args.num):
 		speed = speed+1
+		i = i+1
+		
+		# address / ID
 		frame = can.Frame(0x202)
-
+		
+		# split can speed in to two bytes
 		speed_a = (speed & 0xff00) >> 8
 		speed_b = (speed & 0x00ff) 
 	
+		# data frame		
 		frame.data = [speed_a, speed_b, speed_a, speed_b, speed_a, speed_b, speed_a, speed_b,]
 
 		dev.send(frame)
 		print("frame" , i , "sent")
-		print("speed value: ", speed)
+		print("speed value (m/s): ", speed/100)
 		time.sleep(args.freq)
 
 	print(i, "frames sent")

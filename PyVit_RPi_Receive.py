@@ -10,9 +10,9 @@ import argparse
 
 def main():
 	# bring up can interface device
-	os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")
+	os.system("sudo /sbin/ip link set can0 up type can bitrate 1000000")
 	print("if no errors above, can device up at can0")
-	print("can baud rate set to 500kbps")
+	print("can baud rate set to 1mbps")
 
 	# associate device with "can0"
 	dev = socketcan.SocketCanDev("can0")
