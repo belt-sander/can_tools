@@ -77,15 +77,24 @@ def main():
 	message_2 = np.zeros((len(canData),1)) # experiment value for plotting
 	message_3 = np.zeros((len(canData),1)) # experiment value for plotting
 	message_4 = np.zeros((len(canData),1)) # experiment value for plotting
-	le_message_1 = np.zeros((len(canData),1)) # experiment value for plotting
+	le_message_1 = np.zeros((len(canData),1))
 	le_message_2 = np.zeros((len(canData),1))
-	speed_request_possible = np.zeros((len(canData),1)) # experiment value for plotting
-	le_message_3 = np.zeros((len(canData),1)) # experiment value for plotting
-	le_message_4 = np.zeros((len(canData),1)) # experiment value for plotting
+	le_message_3 = np.zeros((len(canData),1))
+	le_message_4 = np.zeros((len(canData),1))
+	le_message_5 = np.zeros((len(canData),1))
+	le_message_6 = np.zeros((len(canData),1))
+	le_message_7 = np.zeros((len(canData),1))	
 	le_counter = np.zeros((len(canData),1))
 	le_crc = np.zeros((len(canData),1))
 	le_state_1 = np.zeros((len(canData),1))
-	le_message_5 = np.zeros((len(canData),1))
+	speed_request_possible = np.zeros((len(canData),1)) # experiment value for plotting
+	accel_req = np.zeros((len(canData),1))
+	decel_req = np.zeros((len(canData),1))
+	le_test_3 = np.zeros((len(canData),1))
+	le_test_4 = np.zeros((len(canData),1))	
+	le_test_5 = np.zeros((len(canData),1))
+	le_test_6 = np.zeros((len(canData),1))
+	le_test_7 = np.zeros((len(canData),1))	
 
 	message_0byte = np.zeros((len(canData),1)) # experiment value for plotting
 	message_1byte = np.zeros((len(canData),1)) # experiment value for plotting
@@ -160,17 +169,19 @@ def main():
 					mysteryFactor = 0
 					dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
 					crc = dataSum%256
-					print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 	
 					if crc != ord(dataStructOut[7]):
 						print('wrong crc y0!!!!')
 						print('sum: ', dataSum)
 						print('this is calculated crc: ', crc, 'this is the last byte: ', ord(dataStructOut[7]))
 						print('error: ', crc - ord(dataStructOut[7]))
-						print([(bus_num_int), (messIden), (data), (length_int)])				
+						print([(bus_num_int), (messIden), (data), (length_int)])
+					else:
+						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
+		
 
 				# crc test // CORRECT FOR 0x370 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -5)%256)
-				elif messIden == '0x370': # ap lateral command id
+				elif messIden == '0x370': 
 					mysteryFactor = -5
 					dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
 					crc = dataSum%256
@@ -181,9 +192,28 @@ def main():
 						print('this is calculated crc: ', crc, 'this is the last byte: ', ord(dataStructOut[7]))
 						print('error: ', crc - ord(dataStructOut[7]))
 						print([(bus_num_int), (messIden), (data), (length_int)])
+					else:
+						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
+
+				# crc test // CORRECT FOR 0x2b9 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -6)%256)
+				elif messIden == '0x2b9': # ap long command, maybe?
+					mysteryFactor = -6
+					dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
+					crc = dataSum%256
+	
+					if crc != ord(dataStructOut[7]):
+						print('wrong crc y0!!!!')
+						print('sum: ', dataSum)
+						print('this is calculated crc: ', crc, 'this is the last byte: ', ord(dataStructOut[7]))
+						print('error: ', crc - ord(dataStructOut[7]))
+						print([(bus_num_int), (messIden), (data), (length_int)])	
+					else:
+						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
+
+
 
 				# crc test // CORRECT FOR 0x175 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -7)%256)
-				elif messIden == '0x175': # ap lateral command id
+				elif messIden == '0x175':
 					mysteryFactor = -7
 					dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
 					crc = dataSum%256
@@ -194,6 +224,8 @@ def main():
 						print('this is calculated crc: ', crc, 'this is the last byte: ', ord(dataStructOut[7]))
 						print('error: ', crc - ord(dataStructOut[7]))
 						print([(bus_num_int), (messIden), (data), (length_int)])	
+					else:
+						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
 				time.sleep(args.sleep) # sleep
 
@@ -262,18 +294,34 @@ def main():
 					b6 = data[14:][:2]
 					b7 = data[16:][:2]
 					le_data = '0x'+ (b7 + b6 + b5 + b4 + b3 + b2 + b1 + b0)
+
 					le_crc[i:] = ba('0x'+le_data[2:][:2]).uint
 					le_counter[i:] = ba('0x'+le_data[4:][:1]).uint
 					le_state_1[i:] = ba('0x'+le_data[14:][:1]).uint
 					le_message_1[i:] = (int(('0x'+le_data[5:][:3]),0)&0xfff)
 					speed_request_possible[i:] = ba('0x'+le_data[15:][:4]).uint 
-					le_message_2[i:] = ba('0x'+le_data[:6][5:]).uint #a
-	
+					le_message_2[i:] = ba('0x'+le_data[5:][:1]).uint #a
+					le_message_3[i:] = ba('0x'+le_data[6:][:1]).uint #e
+					le_message_4[i:] = ba('0x'+le_data[7:][:1]).uint #b
+					le_message_5[i:] = ba('0x'+le_data[8:][:1]).uint #a
+					le_message_6[i:] = ba('0x'+le_data[9:][:1]).uint #9
+					le_message_7[i:] = ba('0x'+le_data[10:][:1]).uint #1
 
-					le_message_3[i:] = ba('0x'+le_data[:11][8:]).uint #a91
-					le_message_4[i:] = ba('0x'+le_data[:14][11:]).uint #ede		
-					le_message_5[i:] = ba('0x'+le_data[:11][5:]).int #aeba91 integer
-					print('manually swapped data (omitted crc and count): ',le_data[5:][:15])	
+					le_test_3[i:] = ((ba('0x'+le_data[5:][:6]).uint & 0x7FFFFF)) ### main accel request ???
+					le_test_4[i:] = 4194303 ### 2^ 23 / 2 signing threshold
+					le_test_5[i:] = ((ba('0x'+le_data[5:][:3]).uint & 0x800)>>11) ### sign change bit
+
+					fake_signer = ((ba('0x'+le_data[5:][:6]).uint & 0x7FFFFF))
+					
+					if fake_signer > 4194303:
+						le_test_6[i:] = fake_signer - 4194303
+					elif fake_signer < 4194303:
+						le_test_6[i:] = fake_signer + 4194303
+					else:
+						le_test_6[i:] = 0
+
+					# print('manually swapped data (omitted crc and count): ',le_data[5:][:15])
+					# print('manually swapped data: ',le_data)	
 
 					# b0_hex = '0x'+b0
 					# b1_hex = '0x'+b1
@@ -387,35 +435,36 @@ def main():
 		# ax5.set_xlabel('samples')
 		# ax5.legend()
 
+		plt.style.use('dark_background')
 
-		fig2, (ax1, steer1, bk1, ax2, ax3, ax4, ax5, ax6, ax7, ax8) = plt.subplots(10,1, sharex=True)
+		# fig2, (ax1, steer1, bk1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9) = plt.subplots(11,1, sharex=True)
+		fig2, (ax1, bk1, ax2, ax3) = plt.subplots(4,1, sharex=True)		
 		fig2.suptitle('16 bit values (little endian)')
 		ax1.plot(veh_speed, color='orange', label='vehicle speed (0x155)')
 		ax1.plot(speed_request_possible/10, label='speed_request_possible')
 		ax1.plot(ap_state, color='magenta', label='ap state')
 		ax1.plot(accel_pedal, color='red', label='pedal pos')
 		ax1.legend()
-		steer1.plot(steer_angle, color='green', label='steer angle')		
-		steer1.legend()
+		# steer1.plot(steer_angle, color='green', label='steer angle')		
+		# steer1.legend()
 		bk1.plot(brake_pedal_state, color='blue', label='brake pedal state')
 		bk1.plot(brake_high, color='red', label='brake press F')
 		bk1.plot(brake_low, color='gold', label='brake press R')
 		bk1.legend()
-		ax2.plot(le_crc, label='le crc')
-		ax2.legend()
-		ax3.plot(le_counter, label='le counter')
+		ax2.plot(le_test_3, label='something accel')
+		ax2.plot(le_test_5 * 10000000, label='sign change')
+		ax2.plot(le_test_4, label='sign swap mid')
+		ax2.legend()		
+		ax3.plot(le_test_6, label='yass?')
+		ax3.plot(le_test_4, label='sign swap mid')
 		ax3.legend()
-		ax4.plot(le_state_1, label='le_state_1')
-		ax4.legend()
-		ax5.plot(le_message_2, label='le_message_2')
-		ax5.legend()
-		ax6.plot(le_message_3, label='le_message_3')
-		ax6.legend()
-		ax7.plot(le_message_4, label='le_message_4')
-		ax7.legend()
-		ax8.plot(le_message_5, label='mess_2+mess_3 signed')
-		ax8.legend()
-		ax8.set_xlabel('samples')
+		# ax7.plot(le_test_7, label='le_test_7')
+		# ax7.legend()
+		# ax8.plot(decel_req, label='decel_req')
+		# ax8.legend()
+		# ax9.plot(le_test_3, label='le_test_3')
+		# ax9.legend()
+		# ax9.set_xlabel('samples')
 
 
 
