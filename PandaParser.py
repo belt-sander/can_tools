@@ -68,7 +68,17 @@ def main():
 	brake_low = np.zeros((len(canData),1)) # reference for plots
 	brake_high = np.zeros((len(canData),1)) # reference for plots
 	brake_pedal_state = np.zeros((len(canData),1)) # reference for plots
-	drive_torque = np.zeros((len(canData),1))
+	drive_torque_uint = np.zeros((len(canData),1))
+	drive_torque_int = np.zeros((len(canData),1))
+	x2b9_counter = np.zeros((len(canData),1))
+	x2b9_accel_max = np.zeros((len(canData),1))
+	x2b9_accel_min = np.zeros((len(canData),1))
+	x2b9_jerk_max = np.zeros((len(canData),1))
+	x2b9_jerk_min = np.zeros((len(canData),1))
+	x2b9_aebstate = np.zeros((len(canData),1))	
+	x2b9_accstate = np.zeros((len(canData),1))		
+	x2b9_speed_request = np.zeros((len(canData),1)) # experiment value for plotting
+	x2b9_speed_error = np.zeros((len(canData),1)) # error term for long control
 
 	data_graph_all = np.zeros((len(canData),1))
 	id_graph_all = np.zeros((len(canData),1))
@@ -77,25 +87,7 @@ def main():
 	message_2 = np.zeros((len(canData),1)) # experiment value for plotting
 	message_3 = np.zeros((len(canData),1)) # experiment value for plotting
 	message_4 = np.zeros((len(canData),1)) # experiment value for plotting
-	le_message_1 = np.zeros((len(canData),1))
-	le_message_2 = np.zeros((len(canData),1))
-	le_message_3 = np.zeros((len(canData),1))
-	le_message_4 = np.zeros((len(canData),1))
-	le_message_5 = np.zeros((len(canData),1))
-	le_message_6 = np.zeros((len(canData),1))
-	le_message_7 = np.zeros((len(canData),1))	
-	le_counter = np.zeros((len(canData),1))
-	le_crc = np.zeros((len(canData),1))
-	le_state_1 = np.zeros((len(canData),1))
-	speed_request_possible = np.zeros((len(canData),1)) # experiment value for plotting
-	accel_req = np.zeros((len(canData),1))
-	decel_req = np.zeros((len(canData),1))
-	le_test_3 = np.zeros((len(canData),1))
-	le_test_4 = np.zeros((len(canData),1))	
-	le_test_5 = np.zeros((len(canData),1))
-	le_test_6 = np.zeros((len(canData),1))
-	le_test_7 = np.zeros((len(canData),1))	
-
+	
 	message_0byte = np.zeros((len(canData),1)) # experiment value for plotting
 	message_1byte = np.zeros((len(canData),1)) # experiment value for plotting
 	message_2byte = np.zeros((len(canData),1)) # experiment value for plotting
@@ -104,11 +96,14 @@ def main():
 	message_5byte = np.zeros((len(canData),1)) # experiment value for plotting
 	message_6byte = np.zeros((len(canData),1)) # experiment value for plotting
 	message_7byte = np.zeros((len(canData),1)) # experiment value for plotting				
+
 	user_message_1 = np.zeros((len(canData),1)) # reference for plots
 	user_message_2 = np.zeros((len(canData),1)) # reference for plots
 	user_message_3 = np.zeros((len(canData),1)) # reference for plots
 	user_message_4 = np.zeros((len(canData),1)) # reference for plots	
 	user_message_5 = np.zeros((len(canData),1)) # reference for plots
+
+	zero = np.zeros((len(canData),1))
 
 	# show current mask called at terminal
 	if args.mask is not None:
@@ -179,7 +174,6 @@ def main():
 					else:
 						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 		
-
 				# crc test // CORRECT FOR 0x370 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -5)%256)
 				elif messIden == '0x370': 
 					mysteryFactor = -5
@@ -196,21 +190,19 @@ def main():
 						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
 				# crc test // CORRECT FOR 0x2b9 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -6)%256)
-				elif messIden == '0x2b9': # ap long command, maybe?
-					mysteryFactor = -6
-					dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
-					crc = dataSum%256
+				# elif messIden == '0x2b9': # ap long command, maybe?
+				# 	mysteryFactor = -6
+				# 	dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
+				# 	crc = dataSum%256
 	
-					if crc != ord(dataStructOut[7]):
-						print('wrong crc y0!!!!')
-						print('sum: ', dataSum)
-						print('this is calculated crc: ', crc, 'this is the last byte: ', ord(dataStructOut[7]))
-						print('error: ', crc - ord(dataStructOut[7]))
-						print([(bus_num_int), (messIden), (data), (length_int)])	
-					else:
-						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
-
-
+				# 	if crc != ord(dataStructOut[7]):
+				# 		print('wrong crc y0!!!!')
+				# 		print('sum: ', dataSum)
+				# 		print('this is calculated crc: ', crc, 'this is the last byte: ', ord(dataStructOut[7]))
+				# 		print('error: ', crc - ord(dataStructOut[7]))
+				# 		print([(bus_num_int), (messIden), (data), (length_int)])	
+				# 	else:
+				# 		print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
 				# crc test // CORRECT FOR 0x175 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -7)%256)
 				elif messIden == '0x175':
@@ -232,20 +224,63 @@ def main():
 		### grapher for reversal / tests ###
 		if args.grapher == 'True':
 			### vehicle speed reference channel ###
-			if messIden == '0x155':
-				veh_speed[i:] = (int(('0x'+data[:16][12:]),0)&0xffff)*0.00999999978
-			if messIden == '0x488':
+			if bus_num_int == 0:
+				if messIden == '0x155': ### vehicle speed information
+					veh_speed[i:] = (int(('0x'+data[:16][12:]),0)&0xffff)*0.00999999978
+			
+			if messIden == '0x488': ### autopilot state 
 				ap_state[i:] = (int(('0x'+data[:8][6:]),0)&0xC0)
-			if messIden == '0x108' and bus_num_int == 0:
+			
+			if messIden == '0x108' and bus_num_int == 0: ### drive inverter torque (Nm)
 				accel_pedal[i:] = (int(('0x'+data[:16][14:]),0)*2/5)
-				drive_torque[i:] = ((int(('0x'+data[:10][6:]),0)&0x1FFF)/32)*25
-			if messIden == '0x3':
+				b0 = data[2:][:2]
+				b1 = data[4:][:2]
+				b2 = data[6:][:2]
+				b3 = data[8:][:2]
+				b4 = data[10:][:2]
+				b5 = data[12:][:2]
+				b6 = data[14:][:2]
+				b7 = data[16:][:2]
+				le_data = '0x'+ (b7 + b6 + b5 + b4 + b3 + b2 + b1 + b0)
+				drive_torque_uint[i:] = (ba('0x'+le_data[14:][:4]).uint)&0x1fff
+				if (drive_torque_uint[i]) > 4095:
+					drive_torque_int[i:] = ((drive_torque_uint[i] - 8191)*0.25)
+				else:
+					drive_torque_int[i:] = drive_torque_uint[i]*0.25
+
+			if messIden == '0x3': ### steering wheel angle (deg)
 				steer_angle[i:] = (((int('0x'+data[:6][2:],0)&0x3FFF)/2)-2048)
-			if messIden == '0x185':
+			
+			if messIden == '0x185': ### possible brake pressure measurement or position
 				brake_high[i:] = (int(('0x'+data[:8][2:]),0)&0xffffff)
 				brake_low[i:] = (int(('0x'+data[:14][8:]),0)&0xffffff)
-			if messIden == '0x118':
+			
+			if messIden == '0x118': ### brake depressed state
 				brake_pedal_state[i:] = (int(('0x'+data[:6][4:]),0)&0x80)/128*10000000
+			
+			if messIden == '0x2b9': ### longitudinal control information
+				b0 = data[2:][:2]
+				b1 = data[4:][:2]
+				b2 = data[6:][:2]
+				b3 = data[8:][:2]
+				b4 = data[10:][:2]
+				b5 = data[12:][:2]
+				b6 = data[14:][:2]
+				b7 = data[16:][:2]
+				le_data = '0x'+ (b7 + b6 + b5 + b4 + b3 + b2 + b1 + b0)
+				x2b9_speed_request[i:] = (ba('0x'+le_data[15:][:4]).uint)*0.1
+				x2b9_counter[i:] = ((ba('0x'+le_data[4:][:1]).uint)&0xe)>>1 ### counter
+				x2b9_accel_max[i:] = ((((ba('0x'+le_data[4:][:3]).uint)&0x1ff)*0.04)-15) ### accelMax
+				x2b9_accel_min[i:] = (((((ba('0x'+le_data[7:][:3]).uint)&0xff8)>>3)*0.04)-15) ### accelMin
+				x2b9_jerk_max[i:] = ((((ba('0x'+le_data[9:][:3]).uint)&0x7f8)>>3)*0.034) ### jerkMax
+				x2b9_jerk_min[i:] = (((((ba('0x'+le_data[11:][:3]).uint)&0x7fc)>>2)*0.018)-9.1) ### jerkMin
+				x2b9_aebstate[i:] = ((ba('0x'+le_data[11:][:3]).uint)&0x3) ### aebstate
+				x2b9_accstate[i:] = ((ba('0x'+le_data[14:][:1]).uint)) ### accstate
+				
+				if accel_pedal[i] != 0:
+					x2b9_speed_error[i:] = 0
+				else:
+					x2b9_speed_error[i:] = veh_speed[i]- x2b9_speed_request[i]
 
 			### data aggregators for plotting later
 			if message_id_int == maskint and bus_num_int == args_bus_int:
@@ -253,13 +288,11 @@ def main():
 				id_graph_all[i:] = message_id_int
 
 				if length_int == 8:	
-
 					### two byte messages ###
 					message_1[i:] = ba('0x'+data[:6][2:]).uint 
 					message_2[i:] = ba('0x'+data[:10][6:]).uint 
 					message_3[i:] = ba('0x'+data[:14][10:]).uint 
 					message_4[i:] = ba('0x'+data[:18][14:]).uint
-
 					### single byte messages ###
 					message_0byte[i:] = ba('0x'+data[:4][2:]).uint						
 					message_1byte[i:] = ba('0x'+data[:6][4:]).uint
@@ -269,7 +302,6 @@ def main():
 					message_5byte[i:] = ba('0x'+data[:14][12:]).uint										
 					message_6byte[i:] = ba('0x'+data[:16][14:]).uint 										
 					message_7byte[i:] = ba('0x'+data[:18][16:]).uint	
-
 					### user messages for experimentation ###	
 					user_message_2[i:] = (int(('0x'+data[:4][2:]),0)&0xff)>>0 
 					user_message_3[i:] = (int(('0x'+data[:4][2:]),0)&0x7f)>>1
@@ -277,52 +309,6 @@ def main():
 					user_message_5[i:] = (int(('0x'+data[:4][2:]),0)&0x1f)>>3
 
 					### little endian experimentation ###
-					# ba_data = ba(data) 
-					# ba_data.byteswap()
-					# print('swapped data: ',ba_data)
-					# le_message_1[i:] = ba('0x'+ba_data[:6][2:]).uint 
-					# speed_request_possible[i:] = ba('0x'+ba_data[:10][6:]).uint 
-					# le_message_3[i:] = ba('0x'+ba_data[:14][10:]).uint 
-					# le_message_4[i:] = ba('0x'+ba_data[:18][14:]).uint 				
-
-					b0 = data[2:][:2]
-					b1 = data[4:][:2]
-					b2 = data[6:][:2]
-					b3 = data[8:][:2]
-					b4 = data[10:][:2]
-					b5 = data[12:][:2]
-					b6 = data[14:][:2]
-					b7 = data[16:][:2]
-					le_data = '0x'+ (b7 + b6 + b5 + b4 + b3 + b2 + b1 + b0)
-
-					le_crc[i:] = ba('0x'+le_data[2:][:2]).uint
-					le_counter[i:] = ba('0x'+le_data[4:][:1]).uint
-					le_state_1[i:] = ba('0x'+le_data[14:][:1]).uint
-					le_message_1[i:] = (int(('0x'+le_data[5:][:3]),0)&0xfff)
-					speed_request_possible[i:] = ba('0x'+le_data[15:][:4]).uint 
-					le_message_2[i:] = ba('0x'+le_data[5:][:1]).uint #a
-					le_message_3[i:] = ba('0x'+le_data[6:][:1]).uint #e
-					le_message_4[i:] = ba('0x'+le_data[7:][:1]).uint #b
-					le_message_5[i:] = ba('0x'+le_data[8:][:1]).uint #a
-					le_message_6[i:] = ba('0x'+le_data[9:][:1]).uint #9
-					le_message_7[i:] = ba('0x'+le_data[10:][:1]).uint #1
-
-					le_test_3[i:] = ((ba('0x'+le_data[5:][:6]).uint & 0x7FFFFF)) ### main accel request ???
-					le_test_4[i:] = 4194303 ### 2^ 23 / 2 signing threshold
-					le_test_5[i:] = ((ba('0x'+le_data[5:][:3]).uint & 0x800)>>11) ### sign change bit
-
-					fake_signer = ((ba('0x'+le_data[5:][:6]).uint & 0x7FFFFF))
-					
-					if fake_signer > 4194303:
-						le_test_6[i:] = fake_signer - 4194303
-					elif fake_signer < 4194303:
-						le_test_6[i:] = fake_signer + 4194303
-					else:
-						le_test_6[i:] = 0
-
-					# print('manually swapped data (omitted crc and count): ',le_data[5:][:15])
-					# print('manually swapped data: ',le_data)	
-
 					# b0_hex = '0x'+b0
 					# b1_hex = '0x'+b1
 					# b2_hex = '0x'+b2
@@ -413,128 +399,36 @@ def main():
 	### show plots ###	
 	if args.grapher == 'True':		
 
-		# fig, (ax1, steer1, bk1, ax2, ax3, ax4, ax5) = plt.subplots(7,1, sharex=True)
-		# fig.suptitle('16 bit values (big endian)')
-		# ax1.plot(veh_speed, color='orange', label='vehicle speed (0x155)')
-		# ax1.plot(ap_state, color='magenta', label='ap state')
-		# ax1.plot(accel_pedal, color='red', label='pedal pos')
-		# ax1.legend()
-		# steer1.plot(steer_angle, color='green', label='steer angle')		
-		# steer1.legend()
-		# bk1.plot(brake_pedal_state, color='blue', label='brake pedal state')		
-		# bk1.plot(brake_high, color='red', label='brake press F')
-		# bk1.plot(brake_low, color='gold', label='brake press R')
-		# bk1.legend()
-		# ax2.plot(message_1, label='2 byte / message_1')
-		# ax2.legend()
-		# ax3.plot(message_2, label='2 byte / message_2')
-		# ax3.legend()
-		# ax4.plot(message_3, label='2 byte / message_3')
-		# ax4.legend()
-		# ax5.plot(message_4, label='2 byte / message_4')
-		# ax5.set_xlabel('samples')
-		# ax5.legend()
-
 		plt.style.use('dark_background')
 
-		# fig2, (ax1, steer1, bk1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9) = plt.subplots(11,1, sharex=True)
-		fig2, (ax1, bk1, ax2, ax3) = plt.subplots(4,1, sharex=True)		
-		fig2.suptitle('16 bit values (little endian)')
+		fig2, (ax1, torque, bk1, ax2, ax3, ax7, ax8) = plt.subplots(7,1, sharex=True)		
+		fig2.suptitle('tesla long control 0x2b9')
 		ax1.plot(veh_speed, color='orange', label='vehicle speed (0x155)')
-		ax1.plot(speed_request_possible/10, label='speed_request_possible')
+		ax1.plot(x2b9_speed_request, label='x2b9_speed_request')
 		ax1.plot(ap_state, color='magenta', label='ap state')
 		ax1.plot(accel_pedal, color='red', label='pedal pos')
 		ax1.legend()
+		torque.plot(drive_torque_int, label='drive torque')
+		torque.plot(zero)
+		torque.legend()
 		# steer1.plot(steer_angle, color='green', label='steer angle')		
 		# steer1.legend()
 		bk1.plot(brake_pedal_state, color='blue', label='brake pedal state')
 		bk1.plot(brake_high, color='red', label='brake press F')
 		bk1.plot(brake_low, color='gold', label='brake press R')
 		bk1.legend()
-		ax2.plot(le_test_3, label='something accel')
-		ax2.plot(le_test_5 * 10000000, label='sign change')
-		ax2.plot(le_test_4, label='sign swap mid')
+		ax2.plot(x2b9_accel_max, label='accel max')
+		ax2.plot(x2b9_accel_min, label='accel min')
 		ax2.legend()		
-		ax3.plot(le_test_6, label='yass?')
-		ax3.plot(le_test_4, label='sign swap mid')
+		ax3.plot(x2b9_jerk_max, label='jerk max')
+		ax3.plot(x2b9_jerk_min, label='jerk min')
 		ax3.legend()
-		# ax7.plot(le_test_7, label='le_test_7')
-		# ax7.legend()
-		# ax8.plot(decel_req, label='decel_req')
-		# ax8.legend()
-		# ax9.plot(le_test_3, label='le_test_3')
-		# ax9.legend()
-		# ax9.set_xlabel('samples')
-
-
-
-		# fig3, (ax6, steer2, bk2, ax7, ax8, ax9, ax10) = plt.subplots(7,1, sharex=True)
-		# fig3.suptitle('8 bit values (graph 1)')
-		# ax6.plot(veh_speed, color='gold', label='vehicle speed (0x155)')
-		# ax6.plot(ap_state, color='magenta', label='ap state')
-		# ax6.plot(accel_pedal, color='red', label='pedal pos')
-		# ax6.legend()
-		# steer2.plot(steer_angle, color='green', label='steer angle')		
-		# steer2.legend()
-		# bk2.plot(brake_pedal_state, color='blue', label='brake pedal state')		
-		# bk2.plot(brake_high, color='red', label='brake press F')
-		# bk2.plot(brake_low, color='gold', label='brake press R')
-		# bk2.legend()		
-		# ax7.plot(message_0byte, label='byte 0')
-		# ax7.legend()
-		# ax8.plot(message_1byte, label='byte 1')
-		# ax8.legend()
-		# ax9.plot(message_2byte, label='byte 2')
-		# ax9.legend()
-		# ax10.plot(message_3byte, label='byte 3')
-		# ax10.set_xlabel('samples')
-		# ax10.legend()	
-
-		# fig4, (ax11, steer3, bk3, ax12, ax13, ax14, ax15) = plt.subplots(7,1, sharex=True)
-		# fig4.suptitle('8 bit values (graph 2)')
-		# ax11.plot(veh_speed, color='red', label='vehicle speed (0x155)')
-		# ax11.plot(ap_state, color='magenta', label='ap state')
-		# ax11.plot(accel_pedal, color='red', label='pedal pos')
-		# ax11.legend()
-		# steer3.plot(steer_angle, color='green', label='steer angle')		
-		# steer3.legend()
-		# bk3.plot(brake_pedal_state, color='blue', label='brake pedal state')		
-		# bk3.plot(brake_high, color='red', label='brake press F')
-		# bk3.plot(brake_low, color='gold', label='brake press R')
-		# bk3.legend()		
-		# ax12.plot(message_4byte, label='byte 4')
-		# ax12.legend()
-		# ax13.plot(message_5byte, label='byte 5')
-		# ax13.legend()
-		# ax14.plot(message_6byte, label='byte 6')
-		# ax14.legend()
-		# ax15.plot(message_7byte, label='byte 7')
-		# ax15.set_xlabel('samples')
-		# ax15.legend()	
-
-		# fig5, (ax16, steer4, bk4, ax17, ax18, ax19, ax20, ax21) = plt.subplots(8,1, sharex=True)
-		# fig5.suptitle('user value guesses')
-		# ax16.plot(veh_speed, color='green', label='vehicle speed (0x155)')
-		# ax16.plot(ap_state, color='magenta', label='ap state')
-		# ax16.plot(accel_pedal, color='red', label='pedal pos')
-		# ax16.legend()
-		# steer4.plot(steer_angle, color='green', label='steer angle')		
-		# steer4.legend()
-		# bk4.plot(brake_pedal_state, color='blue', label='brake pedal state')		
-		# bk4.plot(brake_high, color='red', label='brake press F')
-		# bk4.plot(brake_low, color='gold', label='brake press R')
-		# bk4.legend()		
-		# ax17.plot(user_message_1, label='user message guess 1')
-		# ax17.legend()
-		# ax18.plot(user_message_2, label='user message guess 2')
-		# ax18.legend()
-		# ax19.plot(user_message_3, label='user message guess 3')
-		# ax19.legend()
-		# ax20.plot(user_message_4, label='user message guess 4')
-		# ax20.legend()
-		# ax21.plot(user_message_5, label='user message guess 5')
-		# ax21.legend()
-		# ax21.set_xlabel('samples')
+		ax7.plot(x2b9_aebstate, label='aeb state')
+		ax7.plot(x2b9_accstate, label='acc state')
+		ax7.legend()
+		ax8.plot(x2b9_speed_error, label='speed error')
+		ax8.plot(zero)
+		ax8.legend()
 
 		plt.show()
 
