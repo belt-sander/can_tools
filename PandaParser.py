@@ -149,7 +149,7 @@ def main():
 				time.sleep(args.sleep) # sleep
 
 			elif message_id_int == maskint and bus_num_int == args_bus_int:
-				dataStructOut = struct.pack('>Q',dataInt) # '>Q' argument == big endian long struct format
+				dataStructOut = struct.pack('>I',dataInt) # '>Q' argument == big endian long struct format
 				p.can_send(message_id_int,dataStructOut,args.playbackBus)
 				print([(bus_num_int), (messIden), (data), (length_int)])								
 				time.sleep(args.sleep) # sleep
@@ -221,8 +221,8 @@ def main():
 						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
 				# crc test // CORRECT FOR 0x2bf ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -6)%256)
-				elif messIden == '0x2bf': # ap long command, maybe?
-					if bus_num_int == 1:
+				if 	bus_num_int == 1:
+					if messIden == '0x2bf'	:
 						mysteryFactor = -12
 						dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
 						crc = dataSum%256
@@ -251,7 +251,7 @@ def main():
 					else:
 						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
-				# crc test // CORRECT FOR 0x175 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -7)%256)
+				# crc test // CORRECT FOR 0x238 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + 0)%256)
 				if bus_num_int == 1:
 					if messIden == '0x238':
 						mysteryFactor = 0
