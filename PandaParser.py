@@ -166,8 +166,8 @@ def main():
 				dataStructOut = struct.pack('>Q',dataInt) # '>Q' argument == big endian 8 byte unsigned // '>I' argument == big endian 4 byte unsigned
 				frameNumber = frameNumber+1
 
-				# if args.grapher == False: 
-				# 	print([(bus_num_int), (messIden), (data), (length_int)], 'frame number: ', frameNumber)
+				if args.grapher == False: 
+					print([(bus_num_int), (messIden), (data), (length_int)], 'frame number: ', frameNumber)
 
 				if messIden == '0x155': # wheel speed id
 					if bus_num_int == 0:
@@ -266,6 +266,23 @@ def main():
 							print([(bus_num_int), (messIden), (data), (length_int)])	
 						else:
 							print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
+
+				# # crc test // WRONG FOR 0x045, needs to be word swapped
+				# if bus_num_int == 0:
+				# 	if messIden == '0x45':
+				# 		mysteryFactor = 0
+				# 		dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
+				# 		crc = dataSum%256
+				
+				# 		if crc != ord(dataStructOut[7]):
+				# 			print('wrong crc y0!!!!')
+				# 			print('sum: ', dataSum)
+				# 			print('this is calculated crc: ', crc, 'this is the last byte: ', ord(dataStructOut[7]))
+				# 			print('error: ', crc - ord(dataStructOut[7]))
+				# 			print([(bus_num_int), (messIden), (data), (length_int)])	
+				# 		else:
+				# 			print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
+
 
 				time.sleep(args.sleep) # sleep
 
