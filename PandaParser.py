@@ -60,7 +60,7 @@ def main():
 	numCanPackets = np.size(canData,0)
 	print("num can samples: ", numCanPackets)
 
-	# set up data aggregator value
+	# tesla data only
 	veh_speed = np.zeros((len(canData),1)) # reference for plots
 	ap_state = np.zeros((len(canData),1)) # reference for plots 
 	accel_pedal = np.zeros((len(canData),1)) # reference for plots
@@ -91,6 +91,15 @@ def main():
 	x3fa_unknown_request = np.zeros((len(canData),1)) # unknown long control variable
 	x3fa_unknown_request_int = np.zeros((len(canData),1)) # signed term for long control variable
 
+	# ford data only
+	ford_init_steering_angle = np.zeros((len(canData),1))
+	ford_calib_steering_angle = np.zeros((len(canData),1))
+	ford_ws_lf = np.zeros((len(canData),1))
+	ford_ws_rf = np.zeros((len(canData),1))
+	ford_ws_lr = np.zeros((len(canData),1))
+	ford_ws_rr = np.zeros((len(canData),1))
+
+	# universal data
 	data_graph_all = np.zeros((len(canData),1))
 	id_graph_all = np.zeros((len(canData),1))
 
@@ -287,6 +296,8 @@ def main():
 				time.sleep(args.sleep) # sleep
 
 		### grapher for reversal / tests ###
+
+		### Tesla Model S Only!!! ###
 		if args.grapher == 'True':
 			### vehicle speed reference channel ###
 			if bus_num_int == 0:
@@ -383,6 +394,21 @@ def main():
 				else:
 					x3fa_unknown_request_int[i:] = (x3fa_unknown_request[i])*0.1			
 
+			### Ford F150 Only!! ###
+			if messIden == '0x76': ### ford f150 steering wheel angle
+				ford_init_steering_angle[i:] = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
+				ford_calib_steering_angle[i:] = (((int(('0x'+data[:10][6:]),0)&0xfffe) - 16000) / 2) * 0.1 # unsure if this is real
+
+			if messIden == '0x217':
+				### claimed units to be rad/sec
+				### assuming tire circumfrence of 2.56 meters
+				### assuming tire radius of 0.40767 meters
+				### rad/sec * radius = meters/sec
+				ford_ws_lf[i:] = ((int(('0x'+data[:6][2:]),0)&0xfffc)-0) * 0.0040767 # m/s
+				ford_ws_rf[i:] = ((int(('0x'+data[:10][6:]),0)&0xfffc)-0) * 0.0040767 # m/s
+				ford_ws_lr[i:] = ((int(('0x'+data[:14][10:]),0)&0xfffc)-0) * 0.0040767 # m/s
+				ford_ws_rr[i:] = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s							
+
 			### data aggregators for plotting later
 			if message_id_int == maskint and bus_num_int == args_bus_int:
 				data_graph_all[i:] = dataInt
@@ -390,7 +416,8 @@ def main():
 
 				if length_int == 8:	
 					### two byte messages ###
-					message_1[i:] = ba('0x'+data[:6][2:]).uint 
+					# message_1[i:] = ba('0x'+data[:6][2:]).uint 
+					message_1[i:] = ba('0x'+data[:6][2:]).uint
 					message_2[i:] = ba('0x'+data[:10][6:]).uint 
 					message_3[i:] = ba('0x'+data[:14][10:]).uint 
 					message_4[i:] = ba('0x'+data[:18][14:]).uint
@@ -404,10 +431,7 @@ def main():
 					message_6byte[i:] = ba('0x'+data[:16][14:]).uint 										
 					message_7byte[i:] = ba('0x'+data[:18][16:]).uint	
 					### user messages for experimentation ###	
-					user_message_2[i:] = (int(('0x'+data[:4][2:]),0)&0xff)>>0 
-					user_message_3[i:] = (int(('0x'+data[:4][2:]),0)&0x7f)>>1
-					user_message_4[i:] = (int(('0x'+data[:4][2:]),0)&0x3f)>>2
-					user_message_5[i:] = (int(('0x'+data[:4][2:]),0)&0x1f)>>3
+					user_message_1[i:] = (int(('0x'+data[:6][2:]),0)&0x7fff)
 
 					### little endian experimentation ###
 					# b0_hex = '0x'+b0
@@ -503,21 +527,8 @@ def main():
 
 		plt.style.use('dark_background')
 
-		fig1, (ax1_a, torque_a, bk1_a, msg1_a, msg2_a, msg3_a, msg4_a, msg5_a, msg6_a, msg7_a, msg8_a) = plt.subplots(11,1, sharex=True)
-		fig1.suptitle(args.mask)
-		ax1_a.plot(veh_speed, color='orange', label='vehicle speed (0x155)')
-		ax1_a.plot(x2b9_speed_request, label='x2b9_speed_request')
-		ax1_a.plot(x2bf_speed_request, label='x2bf_speed_request')
-		ax1_a.plot(ap_state, color='magenta', label='ap state')
-		ax1_a.plot(accel_pedal, color='red', label='pedal pos')
-		ax1_a.legend()
-		torque_a.plot(drive_torque_int, label='drive torque')
-		torque_a.plot(zero)
-		torque_a.legend()
-		bk1_a.plot(brake_pedal_state, color='blue', label='brake pedal state')
-		bk1_a.plot(brake_high, color='red', label='brake press F')
-		bk1_a.plot(brake_low, color='gold', label='brake press R')
-		bk1_a.legend()	
+		fig1, (msg1_a, msg2_a, msg3_a, msg4_a, msg5_a, msg6_a, msg7_a, msg8_a) = plt.subplots(8,1, sharex=True)
+		fig1.suptitle('8 bit messages')
 		msg1_a.plot(message_0byte, label='byte 0')
 		msg1_a.legend()
 		msg2_a.plot(message_1byte, label='byte 1')
@@ -535,43 +546,26 @@ def main():
 		msg8_a.plot(message_7byte, label='byte 7')
 		msg8_a.legend()
 
-		fig2, (ax1, torque, steer1, bk1, ax2, ax3, ax7, ax8) = plt.subplots(8,1, sharex=True)		
-		fig2.suptitle('tesla long control 0x2b9')
-		ax1.plot(veh_speed, color='orange', label='vehicle speed (0x155)')
-		ax1.plot(x2b9_speed_request, label='x2b9_speed_request')
-		ax1.plot(x2bf_speed_request, label='x2bf_speed_request')
-		ax1.plot(ap_state, color='magenta', label='ap state')
-		ax1.plot(accel_pedal, color='red', label='pedal pos')
-		ax1.legend()
-		torque.plot(drive_torque_int, label='drive torque')
-		torque.plot(zero)
-		torque.legend()
-		steer1.plot(steer_angle, color='green', label='steer angle')		
-		steer1.plot(x3fa_unknown_request_int, label='unknown x3fa')		
-		steer1.legend()
-		bk1.plot(brake_pedal_state, color='blue', label='brake pedal state')
-		bk1.plot(brake_high, color='red', label='brake press F')
-		bk1.plot(brake_low, color='gold', label='brake press R')
-		bk1.legend()
-		ax2.plot(x2b9_accel_max, label='accel max')
-		ax2.plot(x2b9_accel_min, label='accel min')
-		ax2.plot(x2bf_accel_max, label='x2bf accel max')
-		ax2.plot(x2bf_accel_min, label='x2bf accel min')
-		ax2.legend()		
-		ax3.plot(x2b9_jerk_max, label='jerk max')
-		ax3.plot(x2b9_jerk_min, label='jerk min')
-		ax3.plot(x2bf_jerk_max, label='x2bf jerk max')
-		ax3.plot(x2bf_jerk_min, label='x2bf jerk min')		
-		ax3.legend()
-		ax7.plot(x2b9_aebstate, label='aeb state')
-		ax7.plot(x2b9_accstate, label='acc state')
-		ax7.plot(x2bf_aebstate, label='x2bf aeb state')
-		ax7.plot(x2bf_accstate, label='x2bf acc state')		
-		ax7.legend()	
-		ax8.plot(x2b9_speed_error, label='speed error')
-		ax8.plot(x2bf_speed_error, label='x2bf speed error')
-		ax8.plot(zero)
-		ax8.legend()
+		fig2, (msg1, msg2, msg3, msg4) = plt.subplots(4, 1, sharex=True)
+		fig2.suptitle('16 bit messages')
+		msg1.plot(message_1-16000, label='byte 0+1')
+		msg1.legend()
+		msg2.plot(message_2, label='byte 2+3')
+		msg2.legend()
+		msg3.plot(message_3, label='byte 4+5')
+		msg3.legend()
+		msg4.plot(message_4, label='byte 6+7')
+		msg4.legend()
+
+		fig3, (msg1, msg2) = plt.subplots(2,1,sharex=True)
+		fig3.suptitle('user message guesses')
+		msg1.plot(ford_init_steering_angle, label='steering angle (f150) degrees')
+		msg1.legend()
+		msg2.plot(ford_ws_lf * 2.237, label='left front wheel speed (f150) mph')
+		msg2.plot(ford_ws_rf * 2.237, label='right front wheel speed (f150) mph')
+		msg2.plot(ford_ws_lr * 2.237, label='left rear wheel speed (f150) mph')
+		msg2.plot(ford_ws_rr * 2.237, label='right rear wheel speed (f150) mph')						
+		msg2.legend()
 
 		plt.show()
 

@@ -8,6 +8,7 @@ import numpy as np
 import binascii
 import csv
 import sys
+import time
 from panda import Panda
 
 def parse_args():
@@ -67,8 +68,8 @@ def can_logger():
 
 			for address, _, dat, src  in can_recv:
 				if args.mask is None:
-					csvwriter.writerow([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat)])
-					print([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat)])
+					csvwriter.writerow([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat), time.time()])
+					print([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat), time.time()])
 
 					if src == 0:
 						bus0_msg_cnt += 1
@@ -80,8 +81,8 @@ def can_logger():
 				if args.mask is not None:
 					# address filtering ...
 					if address == argId:
-						csvwriter.writerow([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat)])
-						print([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat)])
+						csvwriter.writerow([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat), time.time()])
+						print([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat), time.time()])
 
 						if src == 0:
 							bus0_msg_cnt += 1
