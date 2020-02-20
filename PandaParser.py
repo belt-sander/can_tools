@@ -94,6 +94,7 @@ def main():
 	# ford data only
 	ford_init_steering_angle = np.zeros((len(canData),1))
 	ford_calib_steering_angle = np.zeros((len(canData),1))
+	ford_init_steering_angle_no_mask = np.zeros((len(canData),1))
 	ford_ws_lf = np.zeros((len(canData),1))
 	ford_ws_rf = np.zeros((len(canData),1))
 	ford_ws_lr = np.zeros((len(canData),1))
@@ -143,6 +144,7 @@ def main():
 		messIden = row[1]
 		data = row[2]
 		length = row[3]
+		utc_time = row[4]
 
 		message_id_int = int(messIden,0)
 		bus_num_int = int(busNum,0)
@@ -276,6 +278,19 @@ def main():
 						else:
 							print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
+				elif messIden == '0x76':
+					_ford_init_steering_angle = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
+					_ford_init_steering_angle_no_mask = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
+					_ford_calib_steering_angle = (((int(('0x'+data[:10][6:]),0)&0xfffe) - 16000) / 2) * 0.1 # unsure if this is real
+					print([(bus_num_int), (messIden), (data), (length_int)], ' init: ', _ford_init_steering_angle, ' no mask: ', _ford_init_steering_angle_no_mask, ' time: ', utc_time)
+
+				elif messIden == '0x217':
+					_ford_ws_lf = ((int(('0x'+data[:6][2:]),0)&0xfffc)-0) * 0.0040767 # m/s
+					_ford_ws_rf = ((int(('0x'+data[:10][6:]),0)&0xfffc)-0) * 0.0040767 # m/s
+					_ford_ws_lr = ((int(('0x'+data[:14][10:]),0)&0xfffc)-0) * 0.0040767 # m/s
+					_ford_ws_rr = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s
+					print([(bus_num_int), (messIden), (data), (length_int), ' lr: ', _ford_ws_lr, ' rr: ', _ford_ws_rr, ' time: ', utc_time])					
+
 				# # crc test // WRONG FOR 0x045, needs to be word swapped
 				# if bus_num_int == 0:
 				# 	if messIden == '0x45':
@@ -397,6 +412,7 @@ def main():
 			### Ford F150 Only!! ###
 			if messIden == '0x76': ### ford f150 steering wheel angle
 				ford_init_steering_angle[i:] = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
+				ford_init_steering_angle_no_mask[i,:] = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
 				ford_calib_steering_angle[i:] = (((int(('0x'+data[:10][6:]),0)&0xfffe) - 16000) / 2) * 0.1 # unsure if this is real
 
 			if messIden == '0x217':
@@ -560,6 +576,7 @@ def main():
 		fig3, (msg1, msg2) = plt.subplots(2,1,sharex=True)
 		fig3.suptitle('user message guesses')
 		msg1.plot(ford_init_steering_angle, label='steering angle (f150) degrees')
+		msg1.plot(ford_init_steering_angle_no_mask, label='steering angle no mask (f150) degrees')
 		msg1.legend()
 		msg2.plot(ford_ws_lf * 2.237, label='left front wheel speed (f150) mph')
 		msg2.plot(ford_ws_rf * 2.237, label='right front wheel speed (f150) mph')
