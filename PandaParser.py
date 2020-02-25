@@ -60,14 +60,16 @@ def main():
 	numCanPackets = np.size(canData,0)
 	print("num can samples: ", numCanPackets)
 
+	time_packets = np.zeros((len(canData),1)) 
+
 	# tesla data only
-	veh_speed = np.zeros((len(canData),1)) # reference for plots
-	ap_state = np.zeros((len(canData),1)) # reference for plots 
-	accel_pedal = np.zeros((len(canData),1)) # reference for plots
-	steer_angle = np.zeros((len(canData),1)) # reference for plots
-	brake_low = np.zeros((len(canData),1)) # reference for plots
-	brake_high = np.zeros((len(canData),1)) # reference for plots
-	brake_pedal_state = np.zeros((len(canData),1)) # reference for plots
+	veh_speed = np.zeros((len(canData),1)) 
+	ap_state = np.zeros((len(canData),1))  
+	accel_pedal = np.zeros((len(canData),1)) 
+	steer_angle = np.zeros((len(canData),1)) 
+	brake_low = np.zeros((len(canData),1)) 
+	brake_high = np.zeros((len(canData),1)) 
+	brake_pedal_state = np.zeros((len(canData),1))
 	drive_torque_uint = np.zeros((len(canData),1))
 	drive_torque_int = np.zeros((len(canData),1))
 	x2b9_counter = np.zeros((len(canData),1))
@@ -77,8 +79,8 @@ def main():
 	x2b9_jerk_min = np.zeros((len(canData),1))
 	x2b9_aebstate = np.zeros((len(canData),1))	
 	x2b9_accstate = np.zeros((len(canData),1))		
-	x2b9_speed_request = np.zeros((len(canData),1)) # experiment value for plotting
-	x2b9_speed_error = np.zeros((len(canData),1)) # error term for long control
+	x2b9_speed_request = np.zeros((len(canData),1)) 
+	x2b9_speed_error = np.zeros((len(canData),1)) 
 	x2bf_counter = np.zeros((len(canData),1))
 	x2bf_accel_max = np.zeros((len(canData),1))
 	x2bf_accel_min = np.zeros((len(canData),1))
@@ -86,10 +88,10 @@ def main():
 	x2bf_jerk_min = np.zeros((len(canData),1))
 	x2bf_aebstate = np.zeros((len(canData),1))	
 	x2bf_accstate = np.zeros((len(canData),1))		
-	x2bf_speed_request = np.zeros((len(canData),1)) # experiment value for plotting
-	x2bf_speed_error = np.zeros((len(canData),1)) # error term for long control
-	x3fa_unknown_request = np.zeros((len(canData),1)) # unknown long control variable
-	x3fa_unknown_request_int = np.zeros((len(canData),1)) # signed term for long control variable
+	x2bf_speed_request = np.zeros((len(canData),1)) 
+	x2bf_speed_error = np.zeros((len(canData),1)) 
+	x3fa_unknown_request = np.zeros((len(canData),1)) 
+	x3fa_unknown_request_int = np.zeros((len(canData),1)) 
 
 	# ford data only
 	ford_init_steering_angle = np.zeros((len(canData),1))
@@ -119,7 +121,6 @@ def main():
 	message_7byte = np.zeros((len(canData),1)) # experiment value for plotting				
 
 	user_message_1 = np.zeros((len(canData),1)) # reference for plots
-	user_message_1_int = np.zeros((len(canData),1))
 	user_message_2 = np.zeros((len(canData),1)) # reference for plots
 	user_message_3 = np.zeros((len(canData),1)) # reference for plots
 	user_message_4 = np.zeros((len(canData),1)) # reference for plots	
@@ -180,14 +181,15 @@ def main():
 				if args.grapher == False: 
 					print([(bus_num_int), (messIden), (data), (length_int)], 'frame number: ', frameNumber)
 
+				### tesla vehicle speed ###
 				if messIden == '0x155': # wheel speed id
 					if bus_num_int == 0:
 						b5 = '0x'+(data[:16])[12:] # motec byte offset 5, 16 bit
 						wheelSpeed = int(b5,0)*(0.00999999978)
 						print([(bus_num_int), (messIden), (data), (length_int)], wheelSpeed)	
 
-				# crc test // CORRECT FOR 0x488 ((byte0 + byte1 + byte2 + id + len)%256)
-				elif messIden == '0x488': # ap lateral command id
+				### tesla crc test // CORRECT FOR 0x488 ((byte0 + byte1 + byte2 + id + len)%256) ###
+				elif messIden == '0x488': ### AP lateral control ID
 					mysteryFactor = 0
 					dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
 					crc = dataSum%256
@@ -201,7 +203,7 @@ def main():
 					else:
 						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 		
-				# crc test // CORRECT FOR 0x370 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -5)%256)
+				### tesla crc test // CORRECT FOR 0x370 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -5)%256)
 				elif messIden == '0x370': 
 					mysteryFactor = -5
 					dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
@@ -216,8 +218,8 @@ def main():
 					else:
 						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
-				# crc test // CORRECT FOR 0x2b9 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -6)%256)
-				elif messIden == '0x2b9': # ap long command, maybe?
+				### tesla crc test // CORRECT FOR 0x2b9 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -6)%256)
+				elif messIden == '0x2b9': ### AP long command, maybe?
 					mysteryFactor = -6
 					dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
 					crc = dataSum%256
@@ -231,7 +233,7 @@ def main():
 					else:
 						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
-				# crc test // CORRECT FOR 0x2bf ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -6)%256)
+				### tesla crc test // CORRECT FOR 0x2bf ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -6)%256)
 				if 	bus_num_int == 1:
 					if messIden == '0x2bf'	:
 						mysteryFactor = -12
@@ -247,7 +249,7 @@ def main():
 						else:
 							print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])						
 
-				# crc test // CORRECT FOR 0x175 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -7)%256)
+				### tesla crc test // CORRECT FOR 0x175 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + -7)%256)
 				elif messIden == '0x175':
 					mysteryFactor = -7
 					dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
@@ -262,7 +264,7 @@ def main():
 					else:
 						print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
-				# crc test // CORRECT FOR 0x238 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + 0)%256)
+				### tesla crc test // CORRECT FOR 0x238 ((byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6 + id + len + 0)%256)
 				if bus_num_int == 1:
 					if messIden == '0x238':
 						mysteryFactor = 0
@@ -278,39 +280,26 @@ def main():
 						else:
 							print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
+				### ford steering angle print (no crc) ###
 				elif messIden == '0x76':
 					_ford_init_steering_angle = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
 					_ford_init_steering_angle_no_mask = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
 					_ford_calib_steering_angle = (((int(('0x'+data[:10][6:]),0)&0xfffe) - 16000) / 2) * 0.1 # unsure if this is real
 					print([(bus_num_int), (messIden), (data), (length_int)], ' init: ', _ford_init_steering_angle, ' no mask: ', _ford_init_steering_angle_no_mask, ' time: ', utc_time)
 
+				### ford wheel angular rate print (no crc) ###
 				elif messIden == '0x217':
 					_ford_ws_lf = ((int(('0x'+data[:6][2:]),0)&0xfffc)-0) * 0.0040767 # m/s
 					_ford_ws_rf = ((int(('0x'+data[:10][6:]),0)&0xfffc)-0) * 0.0040767 # m/s
 					_ford_ws_lr = ((int(('0x'+data[:14][10:]),0)&0xfffc)-0) * 0.0040767 # m/s
 					_ford_ws_rr = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s
-					print([(bus_num_int), (messIden), (data), (length_int), ' lr: ', _ford_ws_lr, ' rr: ', _ford_ws_rr, ' time: ', utc_time])					
-
-				# # crc test // WRONG FOR 0x045, needs to be word swapped
-				# if bus_num_int == 0:
-				# 	if messIden == '0x45':
-				# 		mysteryFactor = 0
-				# 		dataSum = mysteryFactor + message_id_int + length_int + ord(dataStructOut[0]) + ord(dataStructOut[1]) + ord(dataStructOut[2]) + ord(dataStructOut[3]) + ord(dataStructOut[4]) + ord(dataStructOut[5]) + ord(dataStructOut[6])
-				# 		crc = dataSum%256
-				
-				# 		if crc != ord(dataStructOut[7]):
-				# 			print('wrong crc y0!!!!')
-				# 			print('sum: ', dataSum)
-				# 			print('this is calculated crc: ', crc, 'this is the last byte: ', ord(dataStructOut[7]))
-				# 			print('error: ', crc - ord(dataStructOut[7]))
-				# 			print([(bus_num_int), (messIden), (data), (length_int)])	
-				# 		else:
-				# 			print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
-
+					print([(bus_num_int), (messIden), (data), (length_int)], ' lr (m/s): ', "{0:.4f}".format(_ford_ws_lr), ' rr (m/s): ', "{0:.4f}".format(_ford_ws_rr), ' time: ', utc_time)				
 
 				time.sleep(args.sleep) # sleep
 
-		### grapher for reversal / tests ###
+		'''
+		Grapher / Plotter
+		'''
 
 		### Tesla Model S Only!!! ###
 		if args.grapher == 'True':
