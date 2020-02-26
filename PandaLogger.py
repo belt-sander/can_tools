@@ -13,7 +13,6 @@ from panda import Panda
 
 def parse_args():
 	arg_parser = argparse.ArgumentParser(description='log can data using comma.ai panda and export to txt')
-
 	arg_parser.add_argument('-o', '--outputFileArg', required=True, help='txt file output path')
 	arg_parser.add_argument('-t', '--testMode', required=True, help='set to <True> if ack is required')
 	arg_parser.add_argument('-m', '--mask', required=False, help='set to only log / display data from a particular identifier e.g. <0x666>')
@@ -56,7 +55,7 @@ def can_logger():
 		p.can_clear(0xffff)	
 		outputfile = open(args.outputFileArg, 'wb')
 		csvwriter = csv.writer(outputfile)
-		csvwriter.writerow(['Bus', 'MessageID', 'Message', 'MessageLength'])
+		csvwriter.writerow(['Bus', 'MessageID', 'Message', 'MessageLength', 'UTC Time'])
 		print("Writing csv file to", args.outputFileArg, "Press Ctrl-C to exit...\n")
 		
 		bus0_msg_cnt = 0
