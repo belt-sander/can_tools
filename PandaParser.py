@@ -101,6 +101,8 @@ def main():
 	ford_ws_rf = np.zeros((len(canData),1))
 	ford_ws_lr = np.zeros((len(canData),1))
 	ford_ws_rr = np.zeros((len(canData),1))
+	ford_app = np.zeros((len(canData),1))
+	ford_brake_press = np.zeros((len(canData),1))
 
 	# universal data
 	data_graph_all = np.zeros((len(canData),1))
@@ -145,7 +147,7 @@ def main():
 		messIden = row[1]
 		data = row[2]
 		length = row[3]
-		utc_time = row[4]
+		# utc_time = row[4]
 
 		message_id_int = int(messIden,0)
 		bus_num_int = int(busNum,0)
@@ -179,7 +181,8 @@ def main():
 				frameNumber = frameNumber+1
 
 				if args.grapher == False: 
-					print([(bus_num_int), (messIden), (data), (length_int)], 'frame number: ', frameNumber)
+					# '{0}\r'.format(x)
+					print('{0}\r'.format([(bus_num_int), (messIden), (data), (length_int)], 'frame number: ', frameNumber))
 
 				### tesla vehicle speed ###
 				if messIden == '0x155': # wheel speed id
@@ -285,7 +288,7 @@ def main():
 					_ford_init_steering_angle = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
 					_ford_init_steering_angle_no_mask = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
 					_ford_calib_steering_angle = (((int(('0x'+data[:10][6:]),0)&0xfffe) - 16000) / 2) * 0.1 # unsure if this is real
-					print([(bus_num_int), (messIden), (data), (length_int)], ' init: ', _ford_init_steering_angle, ' no mask: ', _ford_init_steering_angle_no_mask, ' time: ', utc_time)
+					# print([(bus_num_int), (messIden), (data), (length_int)], ' init: ', _ford_init_steering_angle, ' no mask: ', _ford_init_steering_angle_no_mask, ' time: ', utc_time)
 
 				### ford wheel angular rate print (no crc) ###
 				elif messIden == '0x217':
@@ -293,7 +296,7 @@ def main():
 					_ford_ws_rf = ((int(('0x'+data[:10][6:]),0)&0xfffc)-0) * 0.0040767 # m/s
 					_ford_ws_lr = ((int(('0x'+data[:14][10:]),0)&0xfffc)-0) * 0.0040767 # m/s
 					_ford_ws_rr = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s
-					print([(bus_num_int), (messIden), (data), (length_int)], ' lr (m/s): ', "{0:.4f}".format(_ford_ws_lr), ' rr (m/s): ', "{0:.4f}".format(_ford_ws_rr), ' time: ', utc_time)				
+					# print([(bus_num_int), (messIden), (data), (length_int)], ' lr (m/s): ', "{0:.4f}".format(_ford_ws_lr), ' rr (m/s): ', "{0:.4f}".format(_ford_ws_rr), ' time: ', utc_time)				
 
 				time.sleep(args.sleep) # sleep
 
@@ -399,11 +402,11 @@ def main():
 					x3fa_unknown_request_int[i:] = (x3fa_unknown_request[i])*0.1			
 
 			### Ford F150 Only!! ###
-			if messIden == '0x76': ### ford f150 steering wheel angle
+			if messIden == '0x76':
+				### ford f150 steering wheel angle units in degrees ###
 				ford_init_steering_angle[i:] = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
-				ford_init_steering_angle_no_mask[i,:] = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
-				ford_calib_steering_angle[i:] = (((int(('0x'+data[:10][6:]),0)&0xfffe) - 16000) / 2) * 0.1 # unsure if this is real
-
+				ford_init_steering_angle_no_mask[i:] = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
+				
 			if messIden == '0x217':
 				### claimed units to be rad/sec
 				### assuming tire circumfrence of 2.56 meters
@@ -412,7 +415,15 @@ def main():
 				ford_ws_lf[i:] = ((int(('0x'+data[:6][2:]),0)&0xfffc)-0) * 0.0040767 # m/s
 				ford_ws_rf[i:] = ((int(('0x'+data[:10][6:]),0)&0xfffc)-0) * 0.0040767 # m/s
 				ford_ws_lr[i:] = ((int(('0x'+data[:14][10:]),0)&0xfffc)-0) * 0.0040767 # m/s
-				ford_ws_rr[i:] = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s							
+				ford_ws_rr[i:] = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s	
+
+			if messIden == '0x204':
+				### units in percentage ###
+				ford_app[i:] = (int(('0x'+data[:6][2:]),0) & 0x01ff)
+
+			if messIden == '0x7d':
+				### unknown units ###
+				ford_brake_press[i:] = (int(('0x'+data[:6][2:]),0) & 0xffff)
 
 			### data aggregators for plotting later
 			if message_id_int == maskint and bus_num_int == args_bus_int:
@@ -427,7 +438,7 @@ def main():
 					message_3[i:] = ba('0x'+data[:14][10:]).uint 
 					message_4[i:] = ba('0x'+data[:18][14:]).uint
 					### single byte messages ###
-					message_0byte[i:] = ba('0x'+data[:4][2:]).int						
+					message_0byte[i:] = ba('0x'+data[:4][2:]).uint						
 					message_1byte[i:] = ba('0x'+data[:6][4:]).uint
 					message_2byte[i:] = ba('0x'+data[:8][6:]).uint 
 					message_3byte[i:] = ba('0x'+data[:10][8:]).uint
@@ -436,7 +447,8 @@ def main():
 					message_6byte[i:] = ba('0x'+data[:16][14:]).uint 										
 					message_7byte[i:] = ba('0x'+data[:18][16:]).uint	
 					### user messages for experimentation ###	
-					user_message_1[i:] = (int(('0x'+data[:6][2:]),0)&0x7fff)
+					# user_message_1[i:] = (int(('0x'+data[:6][2:]),0)&0xffc0) >> 6101
+					user_message_1[i:] = (int(('0x'+data[:6][2:]),0) & 0x01ff)
 
 					### little endian experimentation ###
 					# b0_hex = '0x'+b0
@@ -551,9 +563,11 @@ def main():
 		msg8_a.plot(message_7byte, label='byte 7')
 		msg8_a.legend()
 
-		fig2, (msg1, msg2, msg3, msg4) = plt.subplots(4, 1, sharex=True)
+		fig2, (umsg1, msg1, msg2, msg3, msg4) = plt.subplots(5, 1, sharex=True)
 		fig2.suptitle('16 bit messages')
-		msg1.plot(message_1-16000, label='byte 0+1')
+		umsg1.plot(user_message_1 , label='user message 1')
+		umsg1.legend()
+		msg1.plot(message_1, label='byte 0+1')
 		msg1.legend()
 		msg2.plot(message_2, label='byte 2+3')
 		msg2.legend()
@@ -562,9 +576,8 @@ def main():
 		msg4.plot(message_4, label='byte 6+7')
 		msg4.legend()
 
-		fig3, (msg1, msg2) = plt.subplots(2,1,sharex=True)
+		fig3, (msg1, msg2, msg3, msg4) = plt.subplots(4,1,sharex=True)
 		fig3.suptitle('user message guesses')
-		msg1.plot(ford_init_steering_angle, label='steering angle (f150) degrees')
 		msg1.plot(ford_init_steering_angle_no_mask, label='steering angle no mask (f150) degrees')
 		msg1.legend()
 		msg2.plot(ford_ws_lf * 2.237, label='left front wheel speed (f150) mph')
@@ -572,6 +585,10 @@ def main():
 		msg2.plot(ford_ws_lr * 2.237, label='left rear wheel speed (f150) mph')
 		msg2.plot(ford_ws_rr * 2.237, label='right rear wheel speed (f150) mph')						
 		msg2.legend()
+		msg3.plot(ford_app * 0.1953125, label='app %')
+		msg3.legend()
+		msg4.plot(ford_brake_press * 0.02, label='brake press (unitless)')
+		msg4.legend()
 
 		plt.show()
 
