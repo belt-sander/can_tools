@@ -446,9 +446,9 @@ def main():
 					message_5byte[i:] = ba('0x'+data[:14][12:]).uint										
 					message_6byte[i:] = ba('0x'+data[:16][14:]).uint 										
 					message_7byte[i:] = ba('0x'+data[:18][16:]).uint	
+
 					### user messages for experimentation ###	
-					# user_message_1[i:] = (int(('0x'+data[:6][2:]),0)&0xffc0) >> 6101
-					user_message_1[i:] = (int(('0x'+data[:6][2:]),0) & 0x01ff)
+					user_message_1[i:] = (int(('0x'+data[:6][2:]),0) & 0xffff)
 
 					### little endian experimentation ###
 					# b0_hex = '0x'+b0
@@ -577,7 +577,7 @@ def main():
 		msg4.legend()
 
 		fig3, (msg1, msg2, msg3, msg4) = plt.subplots(4,1,sharex=True)
-		fig3.suptitle('user message guesses')
+		fig3.suptitle('ford message guesses')
 		msg1.plot(ford_init_steering_angle_no_mask, label='steering angle no mask (f150) degrees')
 		msg1.legend()
 		msg2.plot(ford_ws_lf * 2.237, label='left front wheel speed (f150) mph')
