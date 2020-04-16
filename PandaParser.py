@@ -107,6 +107,8 @@ def main():
 	# universal data
 	data_graph_all = np.zeros((len(canData),1))
 	id_graph_all = np.zeros((len(canData),1))
+	utc_time_all = np.zeros((len(canData),1))
+	utc_time_avg = np.zeros((len(canData),1))
 
 	message_1 = np.zeros((len(canData),1)) # experiment value for plotting
 	message_2 = np.zeros((len(canData),1)) # experiment value for plotting
@@ -147,7 +149,7 @@ def main():
 		messIden = row[1]
 		data = row[2]
 		length = row[3]
-		# utc_time = row[4]
+		utc_time = row[4]
 
 		message_id_int = int(messIden,0)
 		bus_num_int = int(busNum,0)
@@ -284,19 +286,25 @@ def main():
 							print('crc is correct!', [(bus_num_int), (messIden), (data), (length_int)])
 
 				### ford steering angle print (no crc) ###
-				elif messIden == '0x76':
-					_ford_init_steering_angle = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
-					_ford_init_steering_angle_no_mask = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
-					_ford_calib_steering_angle = (((int(('0x'+data[:10][6:]),0)&0xfffe) - 16000) / 2) * 0.1 # unsure if this is real
-					# print([(bus_num_int), (messIden), (data), (length_int)], ' init: ', _ford_init_steering_angle, ' no mask: ', _ford_init_steering_angle_no_mask, ' time: ', utc_time)
+				if bus_num_int == 0:
+					# elif messIden == '0x76': # recorded directly from panda
+					if messIden == '0x076': # converted socketcan only
+						_ford_init_steering_angle = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
+						_ford_init_steering_angle_no_mask = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
+						_ford_calib_steering_angle = (((int(('0x'+data[:10][6:]),0)&0xfffe) - 16000) / 2) * 0.1 # unsure if this is real]
+						utc_time_all[i:] = utc_time
+						utc_time_avg[i:] = 1/(utc_time_all[i] - utc_time_all[i-1])
+						# print([(bus_num_int), (messIden), (data), (length_int)], ' init: ', _ford_init_steering_angle, ' no mask: ', _ford_init_steering_angle_no_mask, ' freq: ', utc_time_avg[i])
 
-				### ford wheel angular rate print (no crc) ###
-				elif messIden == '0x217':
-					_ford_ws_lf = ((int(('0x'+data[:6][2:]),0)&0xfffc)-0) * 0.0040767 # m/s
-					_ford_ws_rf = ((int(('0x'+data[:10][6:]),0)&0xfffc)-0) * 0.0040767 # m/s
-					_ford_ws_lr = ((int(('0x'+data[:14][10:]),0)&0xfffc)-0) * 0.0040767 # m/s
-					_ford_ws_rr = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s
-					# print([(bus_num_int), (messIden), (data), (length_int)], ' lr (m/s): ', "{0:.4f}".format(_ford_ws_lr), ' rr (m/s): ', "{0:.4f}".format(_ford_ws_rr), ' time: ', utc_time)				
+					### ford wheel angular rate print (no crc) ###
+					elif messIden == '0x217':
+						_ford_ws_lf = ((int(('0x'+data[:6][2:]),0)&0xfffc)-0) * 0.0040767 # m/s
+						_ford_ws_rf = ((int(('0x'+data[:10][6:]),0)&0xfffc)-0) * 0.0040767 # m/s
+						_ford_ws_lr = ((int(('0x'+data[:14][10:]),0)&0xfffc)-0) * 0.0040767 # m/s
+						_ford_ws_rr = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s
+						utc_time_all[i:] = utc_time
+						utc_time_avg[i:] = 1/(utc_time_all[i] - utc_time_all[i-1])
+						# print([(bus_num_int), (messIden), (data), (length_int)], ' lr (m/s): ', "{0:.4f}".format(_ford_ws_lr), ' rr (m/s): ', "{0:.4f}".format(_ford_ws_rr), ' freq: ', utc_time_avg[i])				
 
 				time.sleep(args.sleep) # sleep
 
@@ -360,7 +368,7 @@ def main():
 				x2b9_aebstate[i:] = ((ba('0x'+le_data[11:][:3]).uint)&0x3) ### aebstate
 				x2b9_accstate[i:] = ((ba('0x'+le_data[14:][:1]).uint)) ### accstate
 
-			if (bus_num_int == 1):
+			# if bus_num_int == 1:
 				if messIden == '0x2bf': ### longitudinal control information
 					b0 = data[2:][:2]
 					b1 = data[4:][:2]
@@ -402,28 +410,30 @@ def main():
 					x3fa_unknown_request_int[i:] = (x3fa_unknown_request[i])*0.1			
 
 			### Ford F150 Only!! ###
-			if messIden == '0x76':
-				### ford f150 steering wheel angle units in degrees ###
-				ford_init_steering_angle[i:] = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
-				ford_init_steering_angle_no_mask[i:] = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
-				
-			if messIden == '0x217':
-				### claimed units to be rad/sec
-				### assuming tire circumfrence of 2.56 meters
-				### assuming tire radius of 0.40767 meters
-				### rad/sec * radius = meters/sec
-				ford_ws_lf[i:] = ((int(('0x'+data[:6][2:]),0)&0xfffc)-0) * 0.0040767 # m/s
-				ford_ws_rf[i:] = ((int(('0x'+data[:10][6:]),0)&0xfffc)-0) * 0.0040767 # m/s
-				ford_ws_lr[i:] = ((int(('0x'+data[:14][10:]),0)&0xfffc)-0) * 0.0040767 # m/s
-				ford_ws_rr[i:] = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s	
+			if bus_num_int == 0:
+				# if messIden == '0x76': # recorded directly from panda
+				if messIden == '0x076': # converted socketcan format
+					### ford f150 steering wheel angle units in degrees ###
+					ford_init_steering_angle[i:] = ((int(('0x'+data[:6][2:]),0)&0x7fff) - 16000) * 0.1
+					ford_init_steering_angle_no_mask[i:] = ((int(('0x'+data[:6][2:]),0)&0xffff) - 16000) * 0.1
+					
+				if messIden == '0x217':
+					### claimed units to be rad/sec
+					### assuming tire circumfrence of 2.56 meters
+					### assuming tire radius of 0.40767 meters
+					### rad/sec * radius = meters/sec
+					ford_ws_lf[i:] = ((int(('0x'+data[:6][2:]),0)&0xfffc)-0) * 0.0040767 # m/s
+					ford_ws_rf[i:] = ((int(('0x'+data[:10][6:]),0)&0xfffc)-0) * 0.0040767 # m/s
+					ford_ws_lr[i:] = ((int(('0x'+data[:14][10:]),0)&0xfffc)-0) * 0.0040767 # m/s
+					ford_ws_rr[i:] = ((int(('0x'+data[:18][14:]),0)&0xfffc)-0) * 0.0040767 # m/s	
 
-			if messIden == '0x204':
-				### units in percentage ###
-				ford_app[i:] = (int(('0x'+data[:6][2:]),0) & 0x01ff)
+				if messIden == '0x204':
+					### units in percentage ###
+					ford_app[i:] = (int(('0x'+data[:6][2:]),0) & 0x01ff)
 
-			if messIden == '0x7d':
-				### unknown units ###
-				ford_brake_press[i:] = (int(('0x'+data[:6][2:]),0) & 0xffff)
+				if messIden == '0x07d':
+					### unknown units ###
+					ford_brake_press[i:] = (int(('0x'+data[:6][2:]),0) & 0xffff)
 
 			### data aggregators for plotting later
 			if message_id_int == maskint and bus_num_int == args_bus_int:
@@ -539,6 +549,8 @@ def main():
 					print('something is br0k3 y0...')
 					sys.exit(0)
 
+	print('avg frequency for ', args.mask, ' at ', np.average(utc_time_avg), 'hz')
+
 	### show plots ###	
 	if args.grapher == 'True':		
 
@@ -576,7 +588,7 @@ def main():
 		msg4.plot(message_4, label='byte 6+7')
 		msg4.legend()
 
-		fig3, (msg1, msg2, msg3, msg4) = plt.subplots(4,1,sharex=True)
+		fig3, (msg1, msg2, msg3, msg4, time_plt) = plt.subplots(5,1,sharex=True)
 		fig3.suptitle('ford message guesses')
 		msg1.plot(ford_init_steering_angle_no_mask, label='steering angle no mask (f150) degrees')
 		msg1.legend()
@@ -589,6 +601,8 @@ def main():
 		msg3.legend()
 		msg4.plot(ford_brake_press * 0.02, label='brake press (unitless)')
 		msg4.legend()
+		time_plt.plot(utc_time_avg, label='update frequency (s)')
+		time_plt.legend()
 
 		plt.show()
 
