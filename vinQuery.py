@@ -119,12 +119,50 @@ class Read():
 				_step = 3
 
 			if _step == 3:			
+				'''				
+				+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+				| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11| 12| 13| 14| 15| 16| 17|   
+				+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+				|   WMI     |         VDS           |             VIS               |
+				+-----------+-------------------+---+---+---+-----------------------+
+				|   manf    |   vehicle type    | CS| MY| PC|   sequential number   |
+				+-----------+-------------------+---+---+---+-----------------------+
+				'''
 				vin_hex = (self.vin_a + self.vin_b + self.vin_c + self.vin_d + self.vin_e + self.vin_f + self.vin_g + self.vin_h + self.vin_i + self.vin_j + self.vin_k + self.vin_l + self.vin_m + self.vin_n + self.vin_o + self.vin_p + self.vin_q)
 				print('vin hex: ', vin_hex)
 				vin_byte = bytes.fromhex(vin_hex)
 				vin_ascii = vin_byte.decode("ASCII")
+				serial = vin_ascii[9:][:8] # Indvidual Serial Number
+				year = vin_ascii[9:][:1] # Letter Year
+				veh_descriptor = vin_ascii[3:][:5] # Vehicle Descriptor
+				wmi = vin_ascii[:3] # World Manufacturer Identifier
+
+				year_dict = {'Y': [2000],
+							'1': [2001],
+							'2': [2002],
+							'3': [2003],
+							'4': [2004],
+							'5': [2005],
+							'6': [2006],
+							'7': [2007],
+							'8': [2008],
+							'9': [2009],
+							'A': [2010],
+							'B': [2011],
+							'C': [2012],
+							'D': [2013],
+							'E': [2014],
+							'F': [2015],
+							'G': [2016],
+							'H': [2017],
+							'J': [2018],
+							'K': [2019]}
+
+
 				print('vin: ', vin_ascii)
-				print('done yo. ')
+				print('year: ', year_dict[year])
+				print('veh_descriptor: ', veh_descriptor)
+
 				sys.exit(0)
 
 
