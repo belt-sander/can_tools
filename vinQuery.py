@@ -137,6 +137,8 @@ class Read():
 				veh_descriptor = vin_ascii[3:][:5] # Vehicle Descriptor
 				wmi = vin_ascii[:3] # World Manufacturer Identifier
 
+				
+
 				year_dict = {'Y': [2000],
 							'1': [2001],
 							'2': [2002],
